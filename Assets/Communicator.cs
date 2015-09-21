@@ -7,10 +7,6 @@ using System.Globalization;
 public class Communicator : MonoBehaviour{
 	private Stream stream;
 	private IEnumerator coroutinePush;
-	private IEnumerator coroutinePull;
-
-	public delegate void MyDelegate(string msg);
-	MyDelegate myDelegate;
 
 	void Start () {
 		// Create socket stream object
@@ -40,7 +36,7 @@ public class Communicator : MonoBehaviour{
 		if(received != null) {
 			for(int i = 0; i < received.Length; i++) {
 				string feed = received[i];
-				Debug.Log ("Update: "+feed);
+
 				if (feed != null && feed != "noop") {					
 					char[] del = { ',' };
 					string[] arr = feed.Split(del);
