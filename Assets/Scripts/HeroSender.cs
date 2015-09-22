@@ -16,12 +16,13 @@ public class HeroSender : MonoBehaviour{
 		stream = StreamFactory.stream;
 	}
 
-	private void Push(float tra, float rot) {	
-		int t = (int)(tra * 1000);
-		int r = (int)(rot * 1000);
+	private void Push(Vector3 pos, Quaternion rot) {	
+		int tmpx = (int)(pos.x * 100);
+		int tmpz = (int)(pos.z * 100);
+		int tmproty = (int)(rot.eulerAngles.y * 10);
 
 		// Send the message
-		stream.Send ("name=two&message="+t+","+r);
+		stream.Send ("name=two&message="+tmpx+","+tmpz+","+tmproty);
 	}
 
 	void Update () {
@@ -40,7 +41,7 @@ public class HeroSender : MonoBehaviour{
 			transform.Rotate(0, rotation, 0);
 
 			// Push the same movement data
-			Push(translation, rotation);
+			Push(transform.position, transform.rotation);
 		}
 	}
 }

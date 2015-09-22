@@ -13,6 +13,7 @@ public class HeroReceiver : MonoBehaviour{
 	}
 
 	void Update () {
+
 		// Using Update for pulling feed from Stream 
 		string[] received = stream.Receive();
 
@@ -23,14 +24,12 @@ public class HeroReceiver : MonoBehaviour{
 				if (data != null && data != "noop") {					
 					char[] del = { ',' };
 					string[] arr = data.Split(del);
-					float tra = float.Parse(arr[0], CultureInfo.InvariantCulture.NumberFormat);
-					float rot = float.Parse(arr[1], CultureInfo.InvariantCulture.NumberFormat);
-					
-					tra = tra / 1000f;
-					rot = rot / 1000f;
+					float x = float.Parse(arr[0], CultureInfo.InvariantCulture.NumberFormat) / 100f;
+					float z = float.Parse(arr[1], CultureInfo.InvariantCulture.NumberFormat) / 100f;
+					float roty = float.Parse(arr[2], CultureInfo.InvariantCulture.NumberFormat) / 10f;
 
-					transform.Translate(0, 0, tra);
-					transform.Rotate(0, rot, 0);
+					transform.position = new Vector3(x, 0, z);
+					transform.rotation = Quaternion.Euler(0, roty, 0);
 				}
 			}
 		}

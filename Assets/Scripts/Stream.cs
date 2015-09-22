@@ -10,6 +10,9 @@ using System.Text;
  * For unity policy check, uncomment lines with: // policy
  * For usage scroll down to main() method.
  */
+using UnityEngine;
+
+
 public class Stream {
 	public string host = "talk.rupy.se";
 	public int port = 80;
@@ -63,6 +66,8 @@ public class Stream {
 		
 		push.Send(Encoding.ASCII.GetBytes(text));
 		push.Receive(data);
+
+		Debug.Log (message);
 	}
 	
 	public string[] Receive() {
