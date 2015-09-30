@@ -1,24 +1,23 @@
-﻿//using UnityEngine; // policy
+﻿//using UnityEngine; // policy ###
 using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Text;
 
 /* A real-time comet stream plugin for rupy.
- * For unity policy check, uncomment lines with: // policy
+ * For unity seach for ###
  * For usage scroll down to main() method.
  */
-using UnityEngine;
-
-
 public class Stream {
-	public string host = "talk.rupy.se";
+	public string host = "fuse.rupy.se";
 	public int port = 80;
 	
 	private Queue<string> queue;
 	private Socket pull, push;
+	private bool connected;
 	
 	private class State {
 		public Socket socket = null;
@@ -26,12 +25,10 @@ public class Stream {
 		public byte[] data = new byte[size];
 	}
 	
-	public Stream(String name) {
-		queue = new Queue<string>();
-		
+	public Stream() {
 		bool policy = true;
 		
-		//policy = Security.PrefetchSocketPolicy(host, port); // policy
+		//policy = Security.PrefetchSocketPolicy(host, port); // policy ###
 		
 		if(!policy)
 			throw new Exception("Policy (" + host + ":" + port + ") failed.");
@@ -39,10 +36,21 @@ public class Stream {
 		IPAddress address = Dns.Resolve(host).AddressList[0];
 		IPEndPoint remote = new IPEndPoint(address, port);
 		
-		push = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-		pull = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+		//Console.WriteLine("Address: " + address + ".");
 		
+		push = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+		push.NoDelay = true;
 		push.Connect(remote);
+	}
+	
+	public void Connect(string name) {
+		queue = new Queue<string>();
+		
+		IPAddress address = Dns.Resolve(host).AddressList[0];
+		IPEndPoint remote = new IPEndPoint(address, port);
+		
+		pull = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+		pull.NoDelay = true;
 		pull.Connect(remote);
 		
 		String data = "GET /pull?name=" + name + " HTTP/1.1\r\n"
@@ -55,22 +63,32 @@ public class Stream {
 		state.socket = pull;
 		
 		pull.BeginReceive(state.data, 0, State.size, 0, new AsyncCallback(Callback), state);
+		
+		connected = true;
 	}
 	
-	public void Send(String message) {
-		byte[] data = new byte[64];
+	public string Send(String name, String message) {
+		byte[] data = new byte[1024];
 		String text = "POST /push HTTP/1.1\r\n"
 			+ "Host: " + host + "\r\n"
 				+ "Head: less\r\n\r\n" // enables TCP no delay
-				+ message;
+				+ "name=" + name + "&message=" + message;
 		
 		push.Send(Encoding.ASCII.GetBytes(text));
-		push.Receive(data);
-
-		Debug.Log (message);
+		int read = push.Receive(data);
+		text = Encoding.ASCII.GetString(data, 0, read);
+		
+		//Console.WriteLine("Read: " + read + ".");
+		//Console.WriteLine("Text: " + text + ".");
+		
+		string[] split = text.Split(new string[] { "\r\n" }, StringSplitOptions.None);
+		return split[2];
 	}
 	
 	public string[] Receive() {
+		if(!connected)
+			return null;
+		
 		lock(queue) {
 			if(queue.Count > 0) {
 				string[] messages = new string[queue.Count];
@@ -92,17 +110,11 @@ public class Stream {
 			int read = state.socket.EndReceive(ar);
 			
 			if(read > 0) {
-				String text = Encoding.ASCII.GetString(state.data, 0, read);
-				String[] split = text.Split(new string[] { "\r\n" }, StringSplitOptions.None);
+				string text = Encoding.ASCII.GetString(state.data, 0, read);
+				string[] split = text.Split(new string[] { "\r\n" }, StringSplitOptions.None);
 				
 				if(!split[0].StartsWith("HTTP")) {
-					int length = split[0].Length + int.Parse(split[0]) + 4;
-					
-					if(length != read) {
-						System.Console.WriteLine("AooB: " + read + "/" + length);
-					}
-					
-					String[] messages = split[1].Split('\n');
+					string[] messages = split[1].Split('\n');
 					
 					lock(queue) {
 						for(int i = 0; i < messages.Length; i++) {
@@ -119,4 +131,4 @@ public class Stream {
 			Console.WriteLine(e.ToString());
 		}
 	}
-};
+}
